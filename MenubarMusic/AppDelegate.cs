@@ -23,12 +23,7 @@ namespace MenubarMusic
             //ユーザーライブラリの取得
             NSAppleScript appleScript = new NSAppleScript("tell application \"iTunes\" to get name of user playlists");
             NSDictionary error;
-            //aaaaaaaaaaa
             NSAppleEventDescriptor result = appleScript.ExecuteAndReturnError(out error);
-
-            //String [] str = result.Description.Split("\"), \'utxt\'(\"");
-
-
 
             Console.OutputEncoding = Encoding.UTF8;
             nint B = result.NumberOfItems;
@@ -39,7 +34,6 @@ namespace MenubarMusic
                 Console.WriteLine(A[i]);
             }
 
-            // Insert code here to initialize your application
             NSStatusBar statusBar = NSStatusBar.SystemStatusBar;
             NSMenu menu = new NSMenu("Music");
 
