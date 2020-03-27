@@ -1,2 +1,2 @@
 # MenubarMusic
-macのYoutube/Spotify用のステータスバーアプリ
+macのiTunes/Spotify用のステータスバーアプリ
