@@ -2,9 +2,38 @@
 using Foundation;
 using System;
 using System.Text;
+using System.Collections.Generic;
 
 namespace MenubarMusic
 {
+    public class MusicPlayer
+    {
+        private String name;
+        private String [] playlist;
+
+        public MusicPlayer(String name)
+        {
+            this.name = name;
+
+            String script = string.Format("tell application \"{0}\" to get name of user playlists", this.name);
+            NSAppleScript appleScript = new NSAppleScript(script);
+            NSDictionary error;
+            NSAppleEventDescriptor result = appleScript.ExecuteAndReturnError(out error);
+
+            nint B = result.NumberOfItems;
+            playlist = new String[B];
+            for (int i = 0; i < playlist.Length; i++)
+            {
+                playlist[i] = result.DescriptorAtIndex(i + 1).StringValue;
+            }
+
+        }
+
+
+
+    }
+
+
     [Register("AppDelegate")]
     public class AppDelegate : NSApplicationDelegate
     {
