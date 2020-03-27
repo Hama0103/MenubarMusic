@@ -29,7 +29,22 @@ namespace MenubarMusic
 
         }
 
+        public String Name()
+        {
+            return this.name;
+        }
 
+        public void AddPlaylistToMenu(NSMenu menu)
+        {
+            for (int i=0;i<this.playlist.Length; i++)
+            {
+                var playlistmenu = new NSMenuItem();
+                playlistmenu.Title = this.playlist[i];
+                playlistmenu.Action = new ObjCRuntime.Selector("playplaylist:");
+                menu.AddItem(playlistmenu);
+            }
+
+        }
 
     }
 
@@ -70,15 +85,32 @@ namespace MenubarMusic
             var item = statusBar.CreateStatusItem(NSStatusItemLength.Variable);
             item.Title = "Music";
             item.HighlightMode = true;
-            item.Length = 250;
+            //item.Length = 250;
             //item.View = new ScrollingStatusItemView();
             item.Menu = menu;
 
             var menuItem = new NSMenuItem();
             menuItem.Title = "Quit";
-            //menuItem.Activated;
-            menuItem.Action = new ObjCRuntime.Selector("quit");
+            menuItem.Action = new ObjCRuntime.Selector("quite:");
             menu.AddItem(menuItem);
+
+            var itunes = new MusicPlayer("iTunes");
+            itunes.AddPlaylistToMenu(menu);
+        }
+
+        [Export("quite:")]
+        public void Quite(NSObject sender)
+        {
+            NSApplication.SharedApplication.Terminate(this);
+        }
+
+        [Export("playplaylist:")]
+        public void Playplaylist(NSMenuItem playlistmenu)
+        {
+            NSAppleScript appleScript = new NSAppleScript("tell application \"iTunes\" to play playlist \""+playlistmenu.Title+"\"");
+            NSDictionary error;
+            NSAppleEventDescriptor result = appleScript.ExecuteAndReturnError(out error);
+            //Console.WriteLine(player.Name());
         }
 
         public override void WillTerminate(NSNotification notification)
