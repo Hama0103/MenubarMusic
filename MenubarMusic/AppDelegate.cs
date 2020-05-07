@@ -4,12 +4,19 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using System.Timers;
+using System.Diagnostics;
+using System.Linq;
+
 
 namespace MenubarMusic
 {
-    public class PlayPause
+    public class Song
     {
-
+        public static Song LastPlayedSong;
+        public String Artist { get; set; }
+        public String Title { get; set; }
+        public String Album { get; set; }
+        public NSImage AlbumArt { get; set; }
     }
 
     public class MusicPlayer
@@ -35,14 +42,9 @@ namespace MenubarMusic
 
         }
 
-        public String GetTrackName()
+        public String Name()
         {
-            String script = string.Format("tell application \"{0}\" to get name of current track", this.name);
-            NSAppleScript appleScript = new NSAppleScript(script);
-            NSDictionary error;
-            NSAppleEventDescriptor result = appleScript.ExecuteAndReturnError(out error);
-
-            return result.StringValue;
+            return this.name;
         }
 
         public void PlayPause()
@@ -67,48 +69,58 @@ namespace MenubarMusic
                 menu.AddItem(playlistmenu);
             }
         }
-    }
 
+        public String GetTrackName()
+        {
+            String script = string.Format("tell application \"{0}\" to get name of current track", this.name);
+            NSAppleScript appleScript = new NSAppleScript(script);
+            NSDictionary error;
+            NSAppleEventDescriptor result = appleScript.ExecuteAndReturnError(out error);
+
+            if (result==null)
+            {
+                return "Null";
+            }
+
+            return result.StringValue;
+        }
+    }
 
     [Register("AppDelegate")]
     public class AppDelegate : NSApplicationDelegate
     {
+        NSStatusItem item;
+        MusicPlayer itunes;
+
         public AppDelegate()
         {
         }
 
         public override void DidFinishLaunching(NSNotification notification)
         {
-            // Insert code here to initialize your application
             //iTunes再生
             //NSAppleScript appleScript = new NSAppleScript("tell application \"iTunes\" to playpause");
 
             //再生中:kPSP 停止中:kPSp
             //NSAppleScript appleScript = new NSAppleScript("tell application \"iTunes\" to get player state");
-            //ユーザーライブラリの取得
-            NSAppleScript appleScript = new NSAppleScript("tell application \"iTunes\" to get name of user playlists");
-            NSDictionary error;
-            NSAppleEventDescriptor result = appleScript.ExecuteAndReturnError(out error);
 
-            Console.OutputEncoding = Encoding.UTF8;
-            nint B = result.NumberOfItems;
-            String[] A = new String[B];
-            for (int i = 0; i < A.Length; i++)
-            {
-                A[i] = result.DescriptorAtIndex(i + 1).StringValue;
-                Console.WriteLine(A[i]);
-            }
+            //NotificationCenterの設定
+            var center = (NSDistributedNotificationCenter)NSDistributedNotificationCenter.DefaultCenter;// as NSNotificationCenter;
+            center.AddObserver(new NSString("com.apple.iTunes.playerInfo"), OnClockChange);
 
+            //ステータスバーの作成
             NSStatusBar statusBar = NSStatusBar.SystemStatusBar;
             NSMenu menu = new NSMenu("Music");
 
+            //ステータスバーの設定
             //var item = statusBar.CreateStatusItem(NSStatusItemLength.Square);
-            var item = statusBar.CreateStatusItem(NSStatusItemLength.Variable);
+            item = statusBar.CreateStatusItem(NSStatusItemLength.Variable);
             item.Title = "Music";
             item.HighlightMode = true;
             item.Menu = menu;
 
-            var itunes = new MusicPlayer("iTunes");
+            //iTunesPlayerの追加
+            itunes = new MusicPlayer("iTunes");
 
             var menuItem2 = new NSMenuItem();
             menuItem2.Title = "PlayPause";
@@ -124,21 +136,19 @@ namespace MenubarMusic
             menu.AddItem(menuItem);
 
             itunes.AddPlaylistToMenu(menu);
+            
+            Console.OutputEncoding = Encoding.UTF8;
+        }
 
-            var sampleTimer = NSTimer.CreateRepeatingScheduledTimer(TimeSpan.FromSeconds(1.0), delegate {
-                item.Title = itunes.GetTrackName();
-            });
-            sampleTimer.Fire();
-
-            /*
-            var timer = new System.Timers.Timer(1000);
-            Console.WriteLine(item.Title);
-            timer.Elapsed += (sender, e) =>
+        public void OnClockChange(NSNotification notification)
+        {
+            var dict = notification.UserInfo;
+            dict.ToList().ForEach((item) =>
             {
-                Console.WriteLine(itunes.GetTrackName());
-            };
-            timer.Start();
-            */
+                Debug.WriteLine($"{item.Key} : {item.Value}");
+            });
+            item.Title = dict["Name"].ToString();
+            //Console.WriteLine(dict["Name"]);
         }
 
         [Export("quite:")]
