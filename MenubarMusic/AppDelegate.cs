@@ -23,11 +23,11 @@ namespace MenubarMusic
         private NSStatusItem item;
         private MusicPlayer itunes;
 
-        public MusicMenu(String title)
+        public MusicMenu(String _title)
         {
             //メニューの作成
             NSStatusBar statusBar = NSStatusBar.SystemStatusBar;
-            NSMenu menu = new NSMenu(title);
+            NSMenu menu = new NSMenu(_title);
 
             this.item = statusBar.CreateStatusItem(NSStatusItemLength.Variable);
             this.item.Title = "Music";
@@ -68,9 +68,9 @@ namespace MenubarMusic
         }
 
         //再生曲の変更時に呼び出される関数
-        public void OnClockChange(NSNotification notification)
+        public void OnClockChange(NSNotification _notification)
         {
-            var dict = notification.UserInfo;
+            var dict = _notification.UserInfo;
             dict.ToList().ForEach((item) =>
             {
                 Debug.WriteLine($"{item.Key} : {item.Value}");
@@ -86,15 +86,13 @@ namespace MenubarMusic
         public String name { get; }
         public String[] playlist { get; }
 
-        public MusicPlayer(String name)
+        public MusicPlayer(String _name)
         {
-            this.name = name;
+            this.name = _name;
 
             //プレイリストの取得
             String script = string.Format("tell application \"{0}\" to get name of user playlists", this.name);
-            NSAppleScript appleScript = new NSAppleScript(script);
-            NSDictionary error;
-            NSAppleEventDescriptor result = appleScript.ExecuteAndReturnError(out error);
+            NSAppleEventDescriptor result = Requesttoitunes(script);
 
             nint B = result.NumberOfItems;
             playlist = new String[B];
@@ -109,26 +107,21 @@ namespace MenubarMusic
         public void PlayPause()
         {
             String script = string.Format("tell application \"{0}\" to playpause", this.name);
-            NSAppleScript appleScript = new NSAppleScript(script);
-            NSDictionary error;
-            NSAppleEventDescriptor result = appleScript.ExecuteAndReturnError(out error);
+            NSAppleEventDescriptor result = Requesttoitunes(script);
         }
 
         //指定されたプレイリストを再生する関数
-        public void Playplaylist(String player_name,String music_title)
+        public void Playplaylist(String _player_name,String _music_title)
         {
-            NSAppleScript appleScript = new NSAppleScript("tell application \"" + player_name + "\" to play playlist \"" + music_title + "\"");
-            NSDictionary error;
-            NSAppleEventDescriptor result = appleScript.ExecuteAndReturnError(out error);
+            String script = "tell application \"" + _player_name + "\" to play playlist \"" + _music_title + "\"";
+            NSAppleEventDescriptor result = Requesttoitunes(script);
         }
 
         //現在再生中のトラック名取得関数
         public String GetTrackName()
         {
             String script = string.Format("tell application \"{0}\" to get name of current track", this.name);
-            NSAppleScript appleScript = new NSAppleScript(script);
-            NSDictionary error;
-            NSAppleEventDescriptor result = appleScript.ExecuteAndReturnError(out error);
+            NSAppleEventDescriptor result = Requesttoitunes(script);
 
             if (result==null)
             {
@@ -136,6 +129,16 @@ namespace MenubarMusic
             }
 
             return result.StringValue;
+        }
+
+        //itunesへApplescriptでリクエストを送信して結果を返す関数
+        private NSAppleEventDescriptor Requesttoitunes(String _script)
+        {
+            NSAppleScript appleScript = new NSAppleScript(_script);
+            NSDictionary error;
+            NSAppleEventDescriptor result = appleScript.ExecuteAndReturnError(out error);
+
+            return result;
         }
     }
 
@@ -151,13 +154,11 @@ namespace MenubarMusic
 
         public override void DidFinishLaunching(NSNotification notification)
         {
-            /*
             //iTunes再生
             //NSAppleScript appleScript = new NSAppleScript("tell application \"iTunes\" to playpause");
 
             //再生中:kPSP 停止中:kPSp
             //NSAppleScript appleScript = new NSAppleScript("tell application \"iTunes\" to get player state");
-            */
 
             MusicMenu menu = new MusicMenu("Music");
             Console.OutputEncoding = Encoding.UTF8;
@@ -172,7 +173,7 @@ namespace MenubarMusic
 
         public override void WillTerminate(NSNotification notification)
         {
-            // Insert code here to tear down your application
+            
         }
     }
 }
