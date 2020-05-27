@@ -6,7 +6,8 @@ using System.Collections.Generic;
 using System.Timers;
 using System.Diagnostics;
 using System.Linq;
-
+using System.Runtime.InteropServices;
+using CoreGraphics;
 
 namespace MenubarMusic
 {
@@ -48,6 +49,35 @@ namespace MenubarMusic
             menuItem.Title = "Quit";
             menuItem.Action = new ObjCRuntime.Selector("quite:");
             menu.AddItem(menuItem);
+
+            var sliderItem = new NSMenuItem();
+            sliderItem.Title = "slider";
+            NSSlider slider = new NSSlider(new CGRect(10, 0, 100, 20));
+            slider.MaxValue = 50.0F;
+            slider.MinValue = 0.0F;
+            slider.FloatValue = 25.0F;
+            slider.SetFrameSize(new CGSize(160, 16));
+            sliderItem.View = slider;
+            menu.AddItem(sliderItem);
+
+            var tableItem = new NSMenuItem();
+            tableItem.Title = "table";
+            NSGridView table = new NSGridView(new CGRect(0, 0, 100, 20));
+            NSTextField[] text = {new NSTextField(new CGRect(0, 0, 50, 20)), new NSTextField(new CGRect(0, 0, 50, 20))};
+            text[0].StringValue = "Pre";
+            text[0].DrawsBackground = false;
+            text[0].Bordered = false;
+            text[0].Editable = false;
+
+            text[1].StringValue = "Next";
+            text[1].DrawsBackground = false;
+            text[1].Bordered = false;
+            text[1].Editable = false;
+
+            table.AddRow(text);
+            Console.Write(table.ColumnCount);
+            tableItem.View = table;
+            menu.AddItem(tableItem);
 
             //プレイリスト情報をメニューに追加
             var playlist = itunes.playlist;
@@ -145,7 +175,7 @@ namespace MenubarMusic
     [Register("AppDelegate")]
     public class AppDelegate : NSApplicationDelegate
     {
-        NSStatusItem item;
+        //NSStatusItem item;
         //MusicPlayer itunes;
 
         public AppDelegate()
