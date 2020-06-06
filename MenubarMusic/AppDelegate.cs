@@ -44,6 +44,59 @@ namespace MenubarMusic
             menuItem2.Activated += (sender, e) => itunes.PlayPause();
             menu.AddItem(menuItem2);
 
+            /*
+            NSSlider slider = new NSSlider(new CGRect(10, 0, 100, 20));
+            slider.MaxValue = 50.0F;
+            slider.MinValue = 0.0F;
+            slider.FloatValue = 25.0F;
+            slider.SetFrameSize(new CGSize(160, 16));
+            sliderItem.View = slider;
+            menu.AddItem(sliderItem);
+            */
+
+            //Pre、Nextボタン作成
+            var tableItem = new NSMenuItem();
+            tableItem.Title = "table";
+            NSGridView table = new NSGridView(new CGRect(0, 0, 90, 16));
+            NSButton [] text = {new NSButton(new CGRect(0, 0, 50, 10)), new NSButton(new CGRect(0, 0, 20, 10))};
+            //NSTextField [] text = { new NSTextField(new CGRect(0, 0, 40, 10)), new NSTextField(new CGRect(0, 0, 20, 10)) };
+
+            text[0].Title = "Pre";
+            text[0].Alignment = NSTextAlignment.Center;
+            //text[0].Bordered = false;
+            text[0].Activated += (sender, e) => itunes.PreTrack();
+
+            text[1].Title = "Next";
+            text[1].Alignment = NSTextAlignment.Center;
+            //text[1].Bordered = false;
+            text[1].Activated += (sender, e) => itunes.NextTrack();
+
+            table.AddRow(text);
+            tableItem.View = table;
+            menu.AddItem(tableItem);
+
+            //プレイリストをメニューに追加
+            var playlist = new NSMenuItem();
+            playlist.Title = "iTunes PlayList";
+            menu.AddItem(playlist);
+            NSMenu playlistsubmenu = new NSMenu();
+            playlist.Submenu = playlistsubmenu;
+
+
+            var playlist_name = itunes.playlist;
+
+            for (int i = 0; i < playlist_name.Length; i++)
+            {
+                var playlistsubmenuitem = new NSMenuItem();
+                playlistsubmenuitem.Title = playlist_name[i];
+                //playlistmenu.Action = new ObjCRuntime.Selector("playlist:");
+                playlistsubmenuitem.Activated += (sender, e) => itunes.Playplaylist(itunes.name, playlistsubmenuitem.Title);
+                playlistsubmenu.AddItem(playlistsubmenuitem);
+                
+            }
+
+            menu.AddItem(NSMenuItem.SeparatorItem);
+
             //アプリ終了項目追加
             var menuItem = new NSMenuItem();
             menuItem.Title = "Quit";
@@ -52,44 +105,6 @@ namespace MenubarMusic
 
             var sliderItem = new NSMenuItem();
             sliderItem.Title = "slider";
-            NSSlider slider = new NSSlider(new CGRect(10, 0, 100, 20));
-            slider.MaxValue = 50.0F;
-            slider.MinValue = 0.0F;
-            slider.FloatValue = 25.0F;
-            slider.SetFrameSize(new CGSize(160, 16));
-            sliderItem.View = slider;
-            menu.AddItem(sliderItem);
-
-            var tableItem = new NSMenuItem();
-            tableItem.Title = "table";
-            NSGridView table = new NSGridView(new CGRect(0, 0, 100, 20));
-            NSTextField[] text = {new NSTextField(new CGRect(0, 0, 50, 20)), new NSTextField(new CGRect(0, 0, 50, 20))};
-            text[0].StringValue = "Pre";
-            text[0].DrawsBackground = false;
-            text[0].Bordered = false;
-            text[0].Editable = false;
-
-            text[1].StringValue = "Next";
-            text[1].DrawsBackground = false;
-            text[1].Bordered = false;
-            text[1].Editable = false;
-
-            table.AddRow(text);
-            Console.Write(table.ColumnCount);
-            tableItem.View = table;
-            menu.AddItem(tableItem);
-
-            //プレイリスト情報をメニューに追加
-            var playlist = itunes.playlist;
-
-            for (int i = 0; i < playlist.Length; i++)
-            {
-                var playlistmenu = new NSMenuItem();
-                playlistmenu.Title = playlist[i];
-                //playlistmenu.Action = new ObjCRuntime.Selector("playlist:");
-                playlistmenu.Activated += (sender, e) => itunes.Playplaylist(itunes.name, playlistmenu.Title);
-                menu.AddItem(playlistmenu);
-            }
 
             //itunesの監視者を作成
             var center = (NSDistributedNotificationCenter)NSDistributedNotificationCenter.DefaultCenter;// as NSNotificationCenter;
@@ -137,6 +152,20 @@ namespace MenubarMusic
         public void PlayPause()
         {
             String script = string.Format("tell application \"{0}\" to playpause", this.name);
+            NSAppleEventDescriptor result = Requesttoitunes(script);
+        }
+
+        //次の曲に移動
+        public void PreTrack()
+        {
+            String script = string.Format("tell application \"{0}\" to previous track", this.name);
+            NSAppleEventDescriptor result = Requesttoitunes(script);
+        }
+
+        //前の曲に移動
+        public void NextTrack()
+        {
+            String script = string.Format("tell application \"{0}\" to next track", this.name);
             NSAppleEventDescriptor result = Requesttoitunes(script);
         }
 
